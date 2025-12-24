@@ -27,7 +27,7 @@ package main
 
 import (
     "net/http"
-    "github.com/burka/a2ui-go/a2ui"
+    a2ui "github.com/burka/a2ui-go"
 )
 
 func main() {
@@ -167,14 +167,13 @@ go run main.go
 
 ```
 a2ui-go/
-├── a2ui/                # Core library
-│   ├── types.go         # Message & component types
-│   ├── builder.go       # Surface builder
-│   ├── helpers.go       # Component constructors
-│   ├── writer.go        # I/O functions
-│   └── a2ui_test.go     # Tests
+├── types.go         # Message & component types
+├── builder.go       # Surface builder
+├── helpers.go       # Component constructors
+├── writer.go        # I/O functions
+├── a2ui_test.go     # Tests
 └── examples/
-    └── streaming/       # Progressive rendering demo
+    └── streaming/   # Progressive rendering demo
 ```
 
 ## Protocol Details

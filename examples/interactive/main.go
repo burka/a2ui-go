@@ -77,14 +77,17 @@ func handleForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSubmit(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-ndjson")
+	// CORS headers must be set before any response
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	if r.Method == "OPTIONS" {
-		w.Header().Set("Access-Control-Allow-Methods", "POST")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.WriteHeader(http.StatusOK)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/x-ndjson")
 
 	// Parse client event
 	var clientMsg a2ui.ClientMessage

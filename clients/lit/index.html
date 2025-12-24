@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A2UI Lit Client</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      font-family: system-ui, sans-serif;
+    }
+    .container {
+      max-width: 500px;
+      margin: 20px auto;
+    }
+    h1 { color: #333; margin-bottom: 5px; }
+    p { color: #666; margin-bottom: 20px; }
+    code { background: #e0e0e0; padding: 2px 6px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>A2UI Lit Client</h1>
+    <p>Connected to Go backend at <code>http://localhost:8080</code></p>
+    <a2ui-renderer streamUrl="http://localhost:8080/form"></a2ui-renderer>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

@@ -194,9 +194,27 @@ a2ui-go/
 ├── helpers.go       # Component constructors
 ├── writer.go        # I/O functions
 ├── a2ui_test.go     # Tests
-└── examples/
-    ├── streaming/   # Progressive rendering
-    └── interactive/ # Forms with client events
+├── examples/
+│   ├── streaming/   # Progressive rendering
+│   └── interactive/ # Forms with client events
+└── clients/
+    ├── angular/     # Angular client renderer
+    └── lit/         # Lit web component renderer
+```
+
+## Client Examples
+
+Start the Go backend first, then run a client:
+
+```bash
+# Terminal 1: Go backend
+cd examples/interactive && go run main.go
+
+# Terminal 2: Angular client (port 4200)
+cd clients/angular && npm install && npm start
+
+# Or: Lit client (port 5173)
+cd clients/lit && npm install && npm run dev
 ```
 
 ## Protocol Details

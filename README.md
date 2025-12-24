@@ -87,6 +87,7 @@ a2ui.Card(id, child)                      // Card container
 a2ui.TextStatic(id, text)                 // Static text
 a2ui.TextBound(id, path)                  // Data-bound text
 a2ui.Button(id, text, actionType)         // Button with action
+a2ui.ButtonWithData(id, text, type, data) // Button with action data
 a2ui.TextField(id, label, placeholder)    // Text input
 a2ui.TextFieldBound(id, label, ph, path)  // Data-bound text input
 a2ui.ImageStatic(id, url, alt)            // Static image
@@ -145,22 +146,43 @@ surface.SetData("/products", []Product{
 
 ### Progressive Streaming
 
-See `examples/streaming/` for a full demo that builds UI incrementally with delays between steps.
+See `examples/streaming/` for progressive UI rendering.
 
-```bash
-cd examples/streaming
-go run main.go
-# Open http://localhost:8080
+### Interactive Forms
+
+Handle user events with `ClientMessage` and `Event` types:
+
+```go
+// Button with action data
+surface.Add(a2ui.ButtonWithData("submit", "Book", "submit",
+    map[string]any{"endpoint": "/api/book"}))
+
+// Handle client events
+func handleSubmit(w http.ResponseWriter, r *http.Request) {
+    var msg a2ui.ClientMessage
+    json.NewDecoder(r.Body).Decode(&msg)
+
+    // Access event data
+    name := msg.Event.Data["name"].(string)
+
+    // Send response UI
+    surface := a2ui.NewSurface("confirmation")
+    // ...
+}
 ```
 
 ## Running Examples
 
-**Streaming Itinerary** - Shows progressive rendering:
+**Streaming** - Progressive rendering:
 ```bash
-cd examples/streaming
-go run main.go
-# Open http://localhost:8080 in browser
-# Or: curl http://localhost:8080/plan
+cd examples/streaming && go run main.go
+# Open http://localhost:8080
+```
+
+**Interactive** - Form with client events:
+```bash
+cd examples/interactive && go run main.go
+# Open http://localhost:8080
 ```
 
 ## Project Structure
@@ -173,7 +195,8 @@ a2ui-go/
 ├── writer.go        # I/O functions
 ├── a2ui_test.go     # Tests
 └── examples/
-    └── streaming/   # Progressive rendering demo
+    ├── streaming/   # Progressive rendering
+    └── interactive/ # Forms with client events
 ```
 
 ## Protocol Details

@@ -64,6 +64,14 @@ func Button(id, text, actionType string) Component {
 	}
 }
 
+// ButtonWithData creates a button with action data.
+func ButtonWithData(id, text, actionType string, data map[string]any) Component {
+	return Component{
+		ID:     id,
+		Button: &ButtonDef{Text: text, Action: Action{Type: actionType, Data: data}},
+	}
+}
+
 // TextField creates a text input component.
 func TextField(id, label, placeholder string) Component {
 	return Component{

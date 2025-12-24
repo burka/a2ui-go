@@ -367,3 +367,97 @@ func TestAddAll(t *testing.T) {
 		t.Errorf("expected 3 components, got %d", len(s.components))
 	}
 }
+
+func TestButtonWithData(t *testing.T) {
+	btn := ButtonWithData("btn", "Submit", "submit", map[string]any{
+		"endpoint": "/api/submit",
+		"method":   "POST",
+	})
+
+	if btn.ID != "btn" {
+		t.Errorf("expected ID 'btn', got '%s'", btn.ID)
+	}
+	if btn.Button == nil {
+		t.Fatal("expected Button to be set")
+	}
+	if btn.Button.Text != "Submit" {
+		t.Errorf("expected text 'Submit', got '%s'", btn.Button.Text)
+	}
+	if btn.Button.Action.Type != "submit" {
+		t.Errorf("expected action type 'submit', got '%s'", btn.Button.Action.Type)
+	}
+	if btn.Button.Action.Data == nil {
+		t.Fatal("expected Action.Data to be set")
+	}
+	if btn.Button.Action.Data["endpoint"] != "/api/submit" {
+		t.Errorf("expected endpoint '/api/submit', got '%v'", btn.Button.Action.Data["endpoint"])
+	}
+}
+
+func TestClientMessage(t *testing.T) {
+	msg := ClientMessage{
+		Event: &Event{
+			SurfaceID:   "form",
+			ComponentID: "submit-btn",
+			Type:        "action",
+			Data: map[string]any{
+				"name": "John",
+				"age":  30,
+			},
+		},
+	}
+
+	// Serialize and deserialize
+	data, err := json.Marshal(msg)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var decoded ClientMessage
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal failed: %v", err)
+	}
+
+	if decoded.Event == nil {
+		t.Fatal("expected Event to be set")
+	}
+	if decoded.Event.SurfaceID != "form" {
+		t.Errorf("expected surfaceId 'form', got '%s'", decoded.Event.SurfaceID)
+	}
+	if decoded.Event.ComponentID != "submit-btn" {
+		t.Errorf("expected componentId 'submit-btn', got '%s'", decoded.Event.ComponentID)
+	}
+	if decoded.Event.Type != "action" {
+		t.Errorf("expected type 'action', got '%s'", decoded.Event.Type)
+	}
+	if decoded.Event.Data["name"] != "John" {
+		t.Errorf("expected name 'John', got '%v'", decoded.Event.Data["name"])
+	}
+}
+
+func TestActionWithData(t *testing.T) {
+	action := Action{
+		Type: "navigate",
+		Data: map[string]any{
+			"url":    "/dashboard",
+			"params": map[string]any{"tab": "settings"},
+		},
+	}
+
+	data, err := json.Marshal(action)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var decoded Action
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal failed: %v", err)
+	}
+
+	if decoded.Type != "navigate" {
+		t.Errorf("expected type 'navigate', got '%s'", decoded.Type)
+	}
+	if decoded.Data["url"] != "/dashboard" {
+		t.Errorf("expected url '/dashboard', got '%v'", decoded.Data["url"])
+	}
+}

@@ -85,7 +85,22 @@ type ButtonDef struct {
 
 // Action defines what happens when a button is clicked.
 type Action struct {
-	Type string `json:"type"`
+	Type string         `json:"type"`
+	Data map[string]any `json:"data,omitempty"`
+}
+
+// ClientMessage represents a message sent from client to server.
+// Used for handling user interactions.
+type ClientMessage struct {
+	Event *Event `json:"event,omitempty"`
+}
+
+// Event represents a user interaction with a component.
+type Event struct {
+	SurfaceID   string         `json:"surfaceId"`
+	ComponentID string         `json:"componentId"`
+	Type        string         `json:"type"` // "action", "input", "change"
+	Data        map[string]any `json:"data,omitempty"`
 }
 
 // TextFieldDef accepts user text input.

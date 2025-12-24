@@ -81,18 +81,48 @@ messages := surface.Messages()
 ### Component Helpers
 
 ```go
-a2ui.Column(id, children...)              // Vertical layout
-a2ui.Row(id, children...)                 // Horizontal layout
-a2ui.Card(id, child)                      // Card container
-a2ui.TextStatic(id, text)                 // Static text
-a2ui.TextBound(id, path)                  // Data-bound text
-a2ui.Button(id, text, actionType)         // Button with action
-a2ui.ButtonWithData(id, text, type, data) // Button with action data
-a2ui.TextField(id, label, placeholder)    // Text input
-a2ui.TextFieldBound(id, label, ph, path)  // Data-bound text input
-a2ui.ImageStatic(id, url, alt)            // Static image
-a2ui.ImageBound(id, path, alt)            // Data-bound image
-a2ui.ListTemplate(id, templateID, path)   // Data-bound list
+// Layout
+a2ui.Column(id, children...)                          // Vertical layout
+a2ui.ColumnWithLayout(id, dist, align, children...)   // With distribution/alignment
+a2ui.Row(id, children...)                             // Horizontal layout
+a2ui.RowWithLayout(id, dist, align, children...)      // With distribution/alignment
+a2ui.Card(id, child)                                  // Card container
+a2ui.ListTemplate(id, templateID, path)               // Data-bound list
+a2ui.Tabs(id, tabs...)                                // Tabbed container
+a2ui.Tab(title, child)                                // Tab definition
+a2ui.Modal(id, entryPoint, content)                   // Modal overlay
+
+// Content
+a2ui.TextStatic(id, text)                             // Static text
+a2ui.TextBound(id, path)                              // Data-bound text
+a2ui.TextWithHint(id, text, hint)                     // Text with usage hint
+a2ui.ImageStatic(id, url, alt)                        // Static image
+a2ui.ImageBound(id, path, alt)                        // Data-bound image
+a2ui.ImageWithFit(id, url, alt, fit)                  // Image with fit option
+a2ui.Icon(id, iconName)                               // Predefined icon
+a2ui.Video(id, url)                                   // Video player
+a2ui.VideoBound(id, path)                             // Data-bound video
+a2ui.AudioPlayer(id, url, description)                // Audio player
+a2ui.AudioPlayerBound(id, path, description)          // Data-bound audio
+a2ui.Divider(id)                                      // Horizontal divider
+a2ui.DividerVertical(id)                              // Vertical divider
+
+// Form
+a2ui.Button(id, text, actionType)                     // Button with action
+a2ui.ButtonPrimary(id, text, actionType)              // Primary button
+a2ui.ButtonWithData(id, text, type, data)             // Button with action data
+a2ui.TextField(id, label, placeholder)                // Text input
+a2ui.TextFieldBound(id, label, ph, path)              // Data-bound text input
+a2ui.TextFieldWithType(id, label, ph, type)           // Text input with type
+a2ui.CheckBox(id, label, value)                       // Checkbox
+a2ui.CheckBoxBound(id, label, path)                   // Data-bound checkbox
+a2ui.DateTimeInput(id, label, date, time)             // Date/time picker
+a2ui.DateTimeInputBound(id, label, path, date, time)  // Data-bound date/time
+a2ui.MultipleChoice(id, label, options)               // Multiple choice
+a2ui.MultipleChoiceBound(id, label, path, options)    // Data-bound choice
+a2ui.Choice(label, value)                             // Choice option
+a2ui.Slider(id, label, min, max, value)               // Numeric slider
+a2ui.SliderBound(id, label, path, min, max)           // Data-bound slider
 ```
 
 ### Writing Output
@@ -146,7 +176,33 @@ surface.SetData("/products", []Product{
 
 ### Progressive Streaming
 
-See `examples/streaming/` for progressive UI rendering.
+For real-time UI updates, build components incrementally and flush between updates:
+
+```go
+w.Header().Set("Content-Type", "application/x-ndjson")
+flusher := w.(http.Flusher)
+
+surface := a2ui.NewSurface("demo")
+surface.Add(a2ui.Column("root", "loading"))
+surface.Add(a2ui.TextStatic("loading", "Processing..."))
+
+// Send initial UI
+a2ui.WriteJSONL(w, surface.Messages())
+flusher.Flush()
+
+// Add components progressively
+surface.Add(a2ui.Card("result", "text"))
+surface.Add(a2ui.TextBound("text", "/result"))
+surface.SetData("/result", "Done!")
+surface.Add(a2ui.Column("root", "result"))
+
+// Send updates
+a2ui.WriteMessage(w, surface.SurfaceUpdateMessage())
+a2ui.WriteMessage(w, surface.DataModelUpdateMessage())
+flusher.Flush()
+```
+
+The pattern: initial surface → add components → set data → `WriteMessage()` + `Flush()` for each update.
 
 ### Interactive Forms
 
@@ -236,13 +292,19 @@ Components reference each other by ID (flat list, not nested JSON).
 
 ## A2UI Spec
 
-This implements [A2UI v0.8](https://a2ui.org/specification/v0.8-a2ui/).
+This implements [A2UI v0.8](https://a2ui.org/specification/v0.8-a2ui/) with **100% component coverage**.
 
-**Standard components supported:**
-- Layout: `Column`, `Row`, `Card`
-- Content: `Text`, `Image`
-- Input: `Button`, `TextField`
-- Data: `List` (with templates)
+**All 18 standard components supported:**
+- Layout: `Column`, `Row`, `Card`, `List`, `Tabs`, `Modal`
+- Content: `Text`, `Image`, `Icon`, `Video`, `AudioPlayer`, `Divider`
+- Form: `Button`, `TextField`, `CheckBox`, `DateTimeInput`, `MultipleChoice`, `Slider`
+
+**Extended properties supported:**
+- Layout: `Distribution`, `Alignment`
+- Text: `UsageHint` (h1-h5, body, caption)
+- Image: `ImageFit` (contain, cover, fill, none, scale-down)
+- TextField: `TextFieldType` (shortText, longText, number, date, obscured)
+- Icons: 14 standard icons (accountCircle, add, arrowBack, check, close, delete, edit, favorite, home, menu, search, settings, star, warning)
 
 Clients can extend with custom components.
 

@@ -66,7 +66,7 @@ func handlePlan(w http.ResponseWriter, r *http.Request) {
 	// Update content to show day1 instead of loading
 	surface.Add(a2ui.Column("content", "day1"))
 
-	a2ui.WriteMessage(w, surface.SurfaceUpdateMessage())
+	a2ui.WriteMessage(w, surface.UpdateComponentsMessage())
 	a2ui.WriteMessage(w, surface.DataModelUpdateMessage())
 	flusher.Flush()
 	time.Sleep(1000 * time.Millisecond)
@@ -90,7 +90,7 @@ func handlePlan(w http.ResponseWriter, r *http.Request) {
 	// Update content to show both days
 	surface.Add(a2ui.Column("content", "day1", "day2"))
 
-	a2ui.WriteMessage(w, surface.SurfaceUpdateMessage())
+	a2ui.WriteMessage(w, surface.UpdateComponentsMessage())
 	a2ui.WriteMessage(w, surface.DataModelUpdateMessage())
 	flusher.Flush()
 	time.Sleep(1000 * time.Millisecond)
@@ -112,7 +112,7 @@ func handlePlan(w http.ResponseWriter, r *http.Request) {
 
 	surface.Add(a2ui.Column("content", "day1", "day2", "day3"))
 
-	a2ui.WriteMessage(w, surface.SurfaceUpdateMessage())
+	a2ui.WriteMessage(w, surface.UpdateComponentsMessage())
 	a2ui.WriteMessage(w, surface.DataModelUpdateMessage())
 	flusher.Flush()
 	time.Sleep(800 * time.Millisecond)
@@ -128,7 +128,7 @@ func handlePlan(w http.ResponseWriter, r *http.Request) {
 	surface.Add(a2ui.Column("content", "day1", "day2", "day3", "summary"))
 	surface.Add(a2ui.TextStatic("footer", "Have a great trip!"))
 
-	a2ui.WriteMessage(w, surface.SurfaceUpdateMessage())
+	a2ui.WriteMessage(w, surface.UpdateComponentsMessage())
 	a2ui.WriteMessage(w, surface.DataModelUpdateMessage())
 	flusher.Flush()
 }
@@ -178,7 +178,7 @@ const indexHTML = `<!DOCTYPE html>
             border-left: 3px solid #007bff;
         }
         .message.begin { border-left-color: #28a745; }
-        .message.surface { border-left-color: #17a2b8; }
+        .message.update { border-left-color: #17a2b8; }
         .message.data { border-left-color: #ffc107; }
     </style>
 </head>
@@ -217,7 +217,7 @@ const indexHTML = `<!DOCTYPE html>
                             div.className = 'message';
 
                             if (msg.beginRendering) div.className += ' begin';
-                            else if (msg.surfaceUpdate) div.className += ' surface';
+                            else if (msg.updateComponents) div.className += ' update';
                             else if (msg.dataModelUpdate) div.className += ' data';
 
                             div.textContent = JSON.stringify(msg, null, 2);

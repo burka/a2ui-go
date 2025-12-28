@@ -61,9 +61,9 @@ func handleForm(w http.ResponseWriter, r *http.Request) {
 	surface.Add(a2ui.TextFieldBound("time-field", "Time", "HH:MM", "/form/time"))
 	surface.Add(a2ui.TextFieldBound("party-field", "Party Size", "Number of guests", "/form/party"))
 
-	// Submit button with endpoint data
-	surface.Add(a2ui.ButtonWithData("submit-btn", "Book Table", "submit",
-		map[string]any{"endpoint": "/submit"}))
+	// Submit button with endpoint data (now returns []Component)
+	surface.AddAll(a2ui.ButtonWithData("submit-btn", "Book Table", "submit",
+		map[string]any{"endpoint": "/submit"})...)
 
 	surface.Add(a2ui.TextStatic("status", ""))
 
@@ -140,8 +140,9 @@ func handleSubmit(w http.ResponseWriter, r *http.Request) {
 	surface.Add(a2ui.TextStatic("title", "Booking Confirmed!"))
 	surface.Add(a2ui.TextBound("booking-id", "/booking/id"))
 	surface.Add(a2ui.TextBound("details", "/booking/details"))
-	surface.Add(a2ui.ButtonWithData("back-btn", "New Booking", "navigate",
-		map[string]any{"url": "/form"}))
+	// Back button (now returns []Component)
+	surface.AddAll(a2ui.ButtonWithData("back-btn", "New Booking", "navigate",
+		map[string]any{"url": "/form"})...)
 
 	surface.SetData("/booking/id", fmt.Sprintf("Confirmation: %s", booking.ID))
 	surface.SetData("/booking/details",
@@ -281,70 +282,78 @@ const indexHTML = `<!DOCTYPE html>
             let dataModel = {};
 
             messages.forEach(msg => {
-                if (msg.surfaceUpdate) {
-                    msg.surfaceUpdate.components.forEach(c => components[c.id] = c);
+                if (msg.updateComponents) {
+                    msg.updateComponents.components.forEach(c => components[c.id] = c);
                 }
                 if (msg.dataModelUpdate) {
                     Object.assign(dataModel, msg.dataModelUpdate.contents);
                 }
             });
 
-            // Simple recursive render
+            // Simple recursive render using v0.9 flat structure
             function render(id, container) {
                 const comp = components[id];
                 if (!comp) return;
 
-                if (comp.Column) {
-                    const div = document.createElement('div');
-                    comp.Column.children.forEach(childId => render(childId, div));
-                    container.appendChild(div);
-                }
-                else if (comp.Card) {
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    if (id.includes('success')) card.className += ' success';
-                    render(comp.Card.child, card);
-                    container.appendChild(card);
-                }
-                else if (comp.Text) {
-                    const div = document.createElement('div');
-                    if (comp.Text.text) {
-                        div.textContent = comp.Text.text;
-                    } else if (comp.Text.dataBinding) {
-                        div.textContent = dataModel[comp.Text.dataBinding.path] || '';
-                    }
-                    if (id === 'header') div.className = 'header';
-                    if (id === 'title') div.className = 'title';
-                    if (id.includes('details') || id.includes('booking')) div.className = 'details';
-                    container.appendChild(div);
-                }
-                else if (comp.TextField) {
-                    const field = document.createElement('div');
-                    field.className = 'field';
+                switch (comp.component) {
+                    case 'Column':
+                        const div = document.createElement('div');
+                        (comp.children || []).forEach(childId => render(childId, div));
+                        container.appendChild(div);
+                        break;
 
-                    const label = document.createElement('label');
-                    label.textContent = comp.TextField.label;
-                    field.appendChild(label);
+                    case 'Card':
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        if (id.includes('success')) card.className += ' success';
+                        render(comp.child, card);
+                        container.appendChild(card);
+                        break;
 
-                    const input = document.createElement('input');
-                    input.placeholder = comp.TextField.placeholder || '';
-                    input.id = 'input-' + id;
+                    case 'Text':
+                        const textDiv = document.createElement('div');
+                        if (comp.text) {
+                            textDiv.textContent = comp.text;
+                        } else if (comp.dataBinding) {
+                            textDiv.textContent = dataModel[comp.dataBinding.path] || '';
+                        }
+                        if (id === 'header') textDiv.className = 'header';
+                        if (id === 'title') textDiv.className = 'title';
+                        if (id.includes('details') || id.includes('booking')) textDiv.className = 'details';
+                        container.appendChild(textDiv);
+                        break;
 
-                    if (comp.TextField.dataBinding) {
-                        const path = comp.TextField.dataBinding.path;
-                        input.value = dataModel[path] || '';
-                        formData[path] = input.value;
-                        input.oninput = () => { formData[path] = input.value; };
-                    }
+                    case 'TextField':
+                        const field = document.createElement('div');
+                        field.className = 'field';
 
-                    field.appendChild(input);
-                    container.appendChild(field);
-                }
-                else if (comp.Button) {
-                    const btn = document.createElement('button');
-                    btn.textContent = comp.Button.text;
-                    btn.onclick = () => handleAction(comp.Button.action);
-                    container.appendChild(btn);
+                        const label = document.createElement('label');
+                        label.textContent = comp.label;
+                        field.appendChild(label);
+
+                        const input = document.createElement('input');
+                        input.placeholder = comp.placeholder || '';
+                        input.id = 'input-' + id;
+
+                        if (comp.dataBinding) {
+                            const path = comp.dataBinding.path;
+                            input.value = dataModel[path] || '';
+                            formData[path] = input.value;
+                            input.oninput = () => { formData[path] = input.value; };
+                        }
+
+                        field.appendChild(input);
+                        container.appendChild(field);
+                        break;
+
+                    case 'Button':
+                        const btn = document.createElement('button');
+                        // In v0.9, button text comes from child Text component
+                        const childComp = components[comp.child];
+                        btn.textContent = childComp ? childComp.text : 'Button';
+                        btn.onclick = () => handleAction(comp.action);
+                        container.appendChild(btn);
+                        break;
                 }
             }
 

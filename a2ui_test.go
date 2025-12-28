@@ -69,12 +69,12 @@ func TestSurfaceMessages(t *testing.T) {
 		t.Errorf("expected root 'root', got '%s'", msgs[0].BeginRendering.Root)
 	}
 
-	// Check surfaceUpdate
-	if msgs[1].SurfaceUpdate == nil {
-		t.Error("expected SurfaceUpdate message")
+	// Check updateComponents
+	if msgs[1].UpdateComponents == nil {
+		t.Error("expected UpdateComponents message")
 	}
-	if len(msgs[1].SurfaceUpdate.Components) != 2 {
-		t.Errorf("expected 2 components, got %d", len(msgs[1].SurfaceUpdate.Components))
+	if len(msgs[1].UpdateComponents.Components) != 2 {
+		t.Errorf("expected 2 components, got %d", len(msgs[1].UpdateComponents.Components))
 	}
 
 	// Check dataModelUpdate
@@ -103,11 +103,11 @@ func TestColumnHelper(t *testing.T) {
 	if c.ID != "col" {
 		t.Errorf("expected ID 'col', got '%s'", c.ID)
 	}
-	if c.Column == nil {
-		t.Fatal("expected Column to be set")
+	if c.Component != "Column" {
+		t.Errorf("expected Component 'Column', got '%s'", c.Component)
 	}
-	if len(c.Column.Children) != 3 {
-		t.Errorf("expected 3 children, got %d", len(c.Column.Children))
+	if len(c.Children) != 3 {
+		t.Errorf("expected 3 children, got %d", len(c.Children))
 	}
 }
 
@@ -117,11 +117,11 @@ func TestRowHelper(t *testing.T) {
 	if r.ID != "row" {
 		t.Errorf("expected ID 'row', got '%s'", r.ID)
 	}
-	if r.Row == nil {
-		t.Fatal("expected Row to be set")
+	if r.Component != "Row" {
+		t.Errorf("expected Component 'Row', got '%s'", r.Component)
 	}
-	if len(r.Row.Children) != 2 {
-		t.Errorf("expected 2 children, got %d", len(r.Row.Children))
+	if len(r.Children) != 2 {
+		t.Errorf("expected 2 children, got %d", len(r.Children))
 	}
 }
 
@@ -131,11 +131,11 @@ func TestCardHelper(t *testing.T) {
 	if c.ID != "card" {
 		t.Errorf("expected ID 'card', got '%s'", c.ID)
 	}
-	if c.Card == nil {
-		t.Fatal("expected Card to be set")
+	if c.Component != "Card" {
+		t.Errorf("expected Component 'Card', got '%s'", c.Component)
 	}
-	if c.Card.Child != "content" {
-		t.Errorf("expected child 'content', got '%s'", c.Card.Child)
+	if c.Child != "content" {
+		t.Errorf("expected child 'content', got '%s'", c.Child)
 	}
 }
 
@@ -145,13 +145,13 @@ func TestTextStaticHelper(t *testing.T) {
 	if txt.ID != "txt" {
 		t.Errorf("expected ID 'txt', got '%s'", txt.ID)
 	}
-	if txt.Text == nil {
-		t.Fatal("expected Text to be set")
+	if txt.Component != "Text" {
+		t.Errorf("expected Component 'Text', got '%s'", txt.Component)
 	}
-	if txt.Text.Text != "Hello World" {
-		t.Errorf("expected text 'Hello World', got '%s'", txt.Text.Text)
+	if txt.Text != "Hello World" {
+		t.Errorf("expected text 'Hello World', got '%s'", txt.Text)
 	}
-	if txt.Text.DataBinding != nil {
+	if txt.DataBinding != nil {
 		t.Error("expected no DataBinding for static text")
 	}
 }
@@ -159,14 +159,14 @@ func TestTextStaticHelper(t *testing.T) {
 func TestTextBoundHelper(t *testing.T) {
 	txt := TextBound("txt", "/user/name")
 
-	if txt.Text == nil {
-		t.Fatal("expected Text to be set")
+	if txt.Component != "Text" {
+		t.Errorf("expected Component 'Text', got '%s'", txt.Component)
 	}
-	if txt.Text.DataBinding == nil {
+	if txt.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if txt.Text.DataBinding.Path != "/user/name" {
-		t.Errorf("expected path '/user/name', got '%s'", txt.Text.DataBinding.Path)
+	if txt.DataBinding.Path != "/user/name" {
+		t.Errorf("expected path '/user/name', got '%s'", txt.DataBinding.Path)
 	}
 }
 
@@ -176,17 +176,17 @@ func TestListTemplateHelper(t *testing.T) {
 	if lst.ID != "list" {
 		t.Errorf("expected ID 'list', got '%s'", lst.ID)
 	}
-	if lst.List == nil {
-		t.Fatal("expected List to be set")
+	if lst.Component != "List" {
+		t.Errorf("expected Component 'List', got '%s'", lst.Component)
 	}
-	if lst.List.Template != "item-template" {
-		t.Errorf("expected template 'item-template', got '%s'", lst.List.Template)
+	if lst.Template != "item-template" {
+		t.Errorf("expected template 'item-template', got '%s'", lst.Template)
 	}
-	if lst.List.DataBinding == nil {
+	if lst.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if lst.List.DataBinding.Path != "/items" {
-		t.Errorf("expected path '/items', got '%s'", lst.List.DataBinding.Path)
+	if lst.DataBinding.Path != "/items" {
+		t.Errorf("expected path '/items', got '%s'", lst.DataBinding.Path)
 	}
 }
 
@@ -282,19 +282,39 @@ func TestJSONSerialization(t *testing.T) {
 }
 
 func TestButtonHelper(t *testing.T) {
-	btn := Button("btn", "Click Me", "submit")
+	btns := Button("btn", "Click Me", "submit")
 
+	if len(btns) != 2 {
+		t.Fatalf("expected 2 components, got %d", len(btns))
+	}
+
+	btn := btns[0]
 	if btn.ID != "btn" {
 		t.Errorf("expected ID 'btn', got '%s'", btn.ID)
 	}
-	if btn.Button == nil {
-		t.Fatal("expected Button to be set")
+	if btn.Component != "Button" {
+		t.Errorf("expected Component 'Button', got '%s'", btn.Component)
 	}
-	if btn.Button.Text != "Click Me" {
-		t.Errorf("expected text 'Click Me', got '%s'", btn.Button.Text)
+	if btn.Child != "btn_text" {
+		t.Errorf("expected child 'btn_text', got '%s'", btn.Child)
 	}
-	if btn.Button.Action.Type != "submit" {
-		t.Errorf("expected action type 'submit', got '%s'", btn.Button.Action.Type)
+	if btn.Action == nil {
+		t.Fatal("expected Action to be set")
+	}
+	if btn.Action.Type != "submit" {
+		t.Errorf("expected action type 'submit', got '%s'", btn.Action.Type)
+	}
+
+	// Check the text child
+	txt := btns[1]
+	if txt.ID != "btn_text" {
+		t.Errorf("expected ID 'btn_text', got '%s'", txt.ID)
+	}
+	if txt.Component != "Text" {
+		t.Errorf("expected Component 'Text', got '%s'", txt.Component)
+	}
+	if txt.Text != "Click Me" {
+		t.Errorf("expected text 'Click Me', got '%s'", txt.Text)
 	}
 }
 
@@ -304,14 +324,14 @@ func TestTextFieldHelper(t *testing.T) {
 	if tf.ID != "input" {
 		t.Errorf("expected ID 'input', got '%s'", tf.ID)
 	}
-	if tf.TextField == nil {
-		t.Fatal("expected TextField to be set")
+	if tf.Component != "TextField" {
+		t.Errorf("expected Component 'TextField', got '%s'", tf.Component)
 	}
-	if tf.TextField.Label != "Email" {
-		t.Errorf("expected label 'Email', got '%s'", tf.TextField.Label)
+	if tf.Label != "Email" {
+		t.Errorf("expected label 'Email', got '%s'", tf.Label)
 	}
-	if tf.TextField.Placeholder != "Enter email" {
-		t.Errorf("expected placeholder 'Enter email', got '%s'", tf.TextField.Placeholder)
+	if tf.Placeholder != "Enter email" {
+		t.Errorf("expected placeholder 'Enter email', got '%s'", tf.Placeholder)
 	}
 }
 
@@ -321,23 +341,23 @@ func TestImageHelpers(t *testing.T) {
 	if img.ID != "img" {
 		t.Errorf("expected ID 'img', got '%s'", img.ID)
 	}
-	if img.Image == nil {
-		t.Fatal("expected Image to be set")
+	if img.Component != "Image" {
+		t.Errorf("expected Component 'Image', got '%s'", img.Component)
 	}
-	if img.Image.URL != "https://example.com/photo.jpg" {
-		t.Errorf("expected URL 'https://example.com/photo.jpg', got '%s'", img.Image.URL)
+	if img.URL != "https://example.com/photo.jpg" {
+		t.Errorf("expected URL 'https://example.com/photo.jpg', got '%s'", img.URL)
 	}
-	if img.Image.Alt != "A photo" {
-		t.Errorf("expected alt 'A photo', got '%s'", img.Image.Alt)
+	if img.Alt != "A photo" {
+		t.Errorf("expected alt 'A photo', got '%s'", img.Alt)
 	}
 
 	// Test bound image
 	imgBound := ImageBound("img2", "/photo/url", "Dynamic photo")
-	if imgBound.Image.DataBinding == nil {
+	if imgBound.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if imgBound.Image.DataBinding.Path != "/photo/url" {
-		t.Errorf("expected path '/photo/url', got '%s'", imgBound.Image.DataBinding.Path)
+	if imgBound.DataBinding.Path != "/photo/url" {
+		t.Errorf("expected path '/photo/url', got '%s'", imgBound.DataBinding.Path)
 	}
 }
 
@@ -369,28 +389,33 @@ func TestAddAll(t *testing.T) {
 }
 
 func TestButtonWithData(t *testing.T) {
-	btn := ButtonWithData("btn", "Submit", "submit", map[string]any{
+	btns := ButtonWithData("btn", "Submit", "submit", map[string]any{
 		"endpoint": "/api/submit",
 		"method":   "POST",
 	})
 
+	if len(btns) != 2 {
+		t.Fatalf("expected 2 components, got %d", len(btns))
+	}
+
+	btn := btns[0]
 	if btn.ID != "btn" {
 		t.Errorf("expected ID 'btn', got '%s'", btn.ID)
 	}
-	if btn.Button == nil {
-		t.Fatal("expected Button to be set")
+	if btn.Component != "Button" {
+		t.Errorf("expected Component 'Button', got '%s'", btn.Component)
 	}
-	if btn.Button.Text != "Submit" {
-		t.Errorf("expected text 'Submit', got '%s'", btn.Button.Text)
+	if btn.Action == nil {
+		t.Fatal("expected Action to be set")
 	}
-	if btn.Button.Action.Type != "submit" {
-		t.Errorf("expected action type 'submit', got '%s'", btn.Button.Action.Type)
+	if btn.Action.Type != "submit" {
+		t.Errorf("expected action type 'submit', got '%s'", btn.Action.Type)
 	}
-	if btn.Button.Action.Data == nil {
+	if btn.Action.Data == nil {
 		t.Fatal("expected Action.Data to be set")
 	}
-	if btn.Button.Action.Data["endpoint"] != "/api/submit" {
-		t.Errorf("expected endpoint '/api/submit', got '%v'", btn.Button.Action.Data["endpoint"])
+	if btn.Action.Data["endpoint"] != "/api/submit" {
+		t.Errorf("expected endpoint '/api/submit', got '%v'", btn.Action.Data["endpoint"])
 	}
 }
 
@@ -471,17 +496,17 @@ func TestTabsHelper(t *testing.T) {
 	if tabs.ID != "tabs" {
 		t.Errorf("expected ID 'tabs', got '%s'", tabs.ID)
 	}
-	if tabs.Tabs == nil {
-		t.Fatal("expected Tabs to be set")
+	if tabs.Component != "Tabs" {
+		t.Errorf("expected Component 'Tabs', got '%s'", tabs.Component)
 	}
-	if len(tabs.Tabs.Tabs) != 2 {
-		t.Errorf("expected 2 tabs, got %d", len(tabs.Tabs.Tabs))
+	if len(tabs.Tabs) != 2 {
+		t.Errorf("expected 2 tabs, got %d", len(tabs.Tabs))
 	}
-	if tabs.Tabs.Tabs[0].Title != "Tab 1" {
-		t.Errorf("expected title 'Tab 1', got '%s'", tabs.Tabs.Tabs[0].Title)
+	if tabs.Tabs[0].Title != "Tab 1" {
+		t.Errorf("expected title 'Tab 1', got '%s'", tabs.Tabs[0].Title)
 	}
-	if tabs.Tabs.Tabs[0].Child != "content1" {
-		t.Errorf("expected child 'content1', got '%s'", tabs.Tabs.Tabs[0].Child)
+	if tabs.Tabs[0].Child != "content1" {
+		t.Errorf("expected child 'content1', got '%s'", tabs.Tabs[0].Child)
 	}
 }
 
@@ -491,14 +516,14 @@ func TestModalHelper(t *testing.T) {
 	if modal.ID != "modal" {
 		t.Errorf("expected ID 'modal', got '%s'", modal.ID)
 	}
-	if modal.Modal == nil {
-		t.Fatal("expected Modal to be set")
+	if modal.Component != "Modal" {
+		t.Errorf("expected Component 'Modal', got '%s'", modal.Component)
 	}
-	if modal.Modal.EntryPointChild != "trigger-btn" {
-		t.Errorf("expected entryPointChild 'trigger-btn', got '%s'", modal.Modal.EntryPointChild)
+	if modal.EntryPointChild != "trigger-btn" {
+		t.Errorf("expected entryPointChild 'trigger-btn', got '%s'", modal.EntryPointChild)
 	}
-	if modal.Modal.ContentChild != "dialog-content" {
-		t.Errorf("expected contentChild 'dialog-content', got '%s'", modal.Modal.ContentChild)
+	if modal.ContentChild != "dialog-content" {
+		t.Errorf("expected contentChild 'dialog-content', got '%s'", modal.ContentChild)
 	}
 }
 
@@ -508,11 +533,11 @@ func TestIconHelper(t *testing.T) {
 	if icon.ID != "icon" {
 		t.Errorf("expected ID 'icon', got '%s'", icon.ID)
 	}
-	if icon.Icon == nil {
-		t.Fatal("expected Icon to be set")
+	if icon.Component != "Icon" {
+		t.Errorf("expected Component 'Icon', got '%s'", icon.Component)
 	}
-	if icon.Icon.Icon != IconSearch {
-		t.Errorf("expected icon 'search', got '%s'", icon.Icon.Icon)
+	if icon.Icon != IconSearch {
+		t.Errorf("expected icon 'search', got '%s'", icon.Icon)
 	}
 }
 
@@ -522,20 +547,20 @@ func TestVideoHelpers(t *testing.T) {
 	if video.ID != "video" {
 		t.Errorf("expected ID 'video', got '%s'", video.ID)
 	}
-	if video.Video == nil {
-		t.Fatal("expected Video to be set")
+	if video.Component != "Video" {
+		t.Errorf("expected Component 'Video', got '%s'", video.Component)
 	}
-	if video.Video.URL != "https://example.com/video.mp4" {
-		t.Errorf("expected URL 'https://example.com/video.mp4', got '%s'", video.Video.URL)
+	if video.URL != "https://example.com/video.mp4" {
+		t.Errorf("expected URL 'https://example.com/video.mp4', got '%s'", video.URL)
 	}
 
 	// Test bound video
 	videoBound := VideoBound("video2", "/media/video")
-	if videoBound.Video.DataBinding == nil {
+	if videoBound.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if videoBound.Video.DataBinding.Path != "/media/video" {
-		t.Errorf("expected path '/media/video', got '%s'", videoBound.Video.DataBinding.Path)
+	if videoBound.DataBinding.Path != "/media/video" {
+		t.Errorf("expected path '/media/video', got '%s'", videoBound.DataBinding.Path)
 	}
 }
 
@@ -545,23 +570,23 @@ func TestAudioPlayerHelpers(t *testing.T) {
 	if audio.ID != "audio" {
 		t.Errorf("expected ID 'audio', got '%s'", audio.ID)
 	}
-	if audio.AudioPlayer == nil {
-		t.Fatal("expected AudioPlayer to be set")
+	if audio.Component != "AudioPlayer" {
+		t.Errorf("expected Component 'AudioPlayer', got '%s'", audio.Component)
 	}
-	if audio.AudioPlayer.URL != "https://example.com/song.mp3" {
-		t.Errorf("expected URL 'https://example.com/song.mp3', got '%s'", audio.AudioPlayer.URL)
+	if audio.URL != "https://example.com/song.mp3" {
+		t.Errorf("expected URL 'https://example.com/song.mp3', got '%s'", audio.URL)
 	}
-	if audio.AudioPlayer.Description != "My Song" {
-		t.Errorf("expected description 'My Song', got '%s'", audio.AudioPlayer.Description)
+	if audio.Description != "My Song" {
+		t.Errorf("expected description 'My Song', got '%s'", audio.Description)
 	}
 
 	// Test bound audio
 	audioBound := AudioPlayerBound("audio2", "/media/audio", "Dynamic Audio")
-	if audioBound.AudioPlayer.DataBinding == nil {
+	if audioBound.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if audioBound.AudioPlayer.DataBinding.Path != "/media/audio" {
-		t.Errorf("expected path '/media/audio', got '%s'", audioBound.AudioPlayer.DataBinding.Path)
+	if audioBound.DataBinding.Path != "/media/audio" {
+		t.Errorf("expected path '/media/audio', got '%s'", audioBound.DataBinding.Path)
 	}
 }
 
@@ -571,14 +596,14 @@ func TestDividerHelpers(t *testing.T) {
 	if div.ID != "div" {
 		t.Errorf("expected ID 'div', got '%s'", div.ID)
 	}
-	if div.Divider == nil {
-		t.Fatal("expected Divider to be set")
+	if div.Component != "Divider" {
+		t.Errorf("expected Component 'Divider', got '%s'", div.Component)
 	}
 
 	// Test vertical divider
 	divV := DividerVertical("divV")
-	if divV.Divider.Orientation != "vertical" {
-		t.Errorf("expected orientation 'vertical', got '%s'", divV.Divider.Orientation)
+	if divV.Orientation != "vertical" {
+		t.Errorf("expected orientation 'vertical', got '%s'", divV.Orientation)
 	}
 }
 
@@ -588,23 +613,23 @@ func TestCheckBoxHelpers(t *testing.T) {
 	if cb.ID != "cb" {
 		t.Errorf("expected ID 'cb', got '%s'", cb.ID)
 	}
-	if cb.CheckBox == nil {
-		t.Fatal("expected CheckBox to be set")
+	if cb.Component != "CheckBox" {
+		t.Errorf("expected Component 'CheckBox', got '%s'", cb.Component)
 	}
-	if cb.CheckBox.Label != "Accept Terms" {
-		t.Errorf("expected label 'Accept Terms', got '%s'", cb.CheckBox.Label)
+	if cb.Label != "Accept Terms" {
+		t.Errorf("expected label 'Accept Terms', got '%s'", cb.Label)
 	}
-	if cb.CheckBox.Value != true {
-		t.Errorf("expected value true, got false")
+	if cb.Checked != true {
+		t.Errorf("expected checked true, got false")
 	}
 
 	// Test bound checkbox
 	cbBound := CheckBoxBound("cb2", "Subscribe", "/prefs/subscribe")
-	if cbBound.CheckBox.DataBinding == nil {
+	if cbBound.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if cbBound.CheckBox.DataBinding.Path != "/prefs/subscribe" {
-		t.Errorf("expected path '/prefs/subscribe', got '%s'", cbBound.CheckBox.DataBinding.Path)
+	if cbBound.DataBinding.Path != "/prefs/subscribe" {
+		t.Errorf("expected path '/prefs/subscribe', got '%s'", cbBound.DataBinding.Path)
 	}
 }
 
@@ -614,26 +639,26 @@ func TestDateTimeInputHelpers(t *testing.T) {
 	if dt.ID != "dt" {
 		t.Errorf("expected ID 'dt', got '%s'", dt.ID)
 	}
-	if dt.DateTimeInput == nil {
-		t.Fatal("expected DateTimeInput to be set")
+	if dt.Component != "DateTimeInput" {
+		t.Errorf("expected Component 'DateTimeInput', got '%s'", dt.Component)
 	}
-	if dt.DateTimeInput.Label != "Select Date" {
-		t.Errorf("expected label 'Select Date', got '%s'", dt.DateTimeInput.Label)
+	if dt.Label != "Select Date" {
+		t.Errorf("expected label 'Select Date', got '%s'", dt.Label)
 	}
-	if dt.DateTimeInput.EnableDate != true {
+	if dt.EnableDate != true {
 		t.Error("expected enableDate true")
 	}
-	if dt.DateTimeInput.EnableTime != false {
+	if dt.EnableTime != false {
 		t.Error("expected enableTime false")
 	}
 
 	// Test bound datetime
 	dtBound := DateTimeInputBound("dt2", "Appointment", "/booking/datetime", true, true)
-	if dtBound.DateTimeInput.DataBinding == nil {
+	if dtBound.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if dtBound.DateTimeInput.DataBinding.Path != "/booking/datetime" {
-		t.Errorf("expected path '/booking/datetime', got '%s'", dtBound.DateTimeInput.DataBinding.Path)
+	if dtBound.DataBinding.Path != "/booking/datetime" {
+		t.Errorf("expected path '/booking/datetime', got '%s'", dtBound.DataBinding.Path)
 	}
 }
 
@@ -647,20 +672,20 @@ func TestMultipleChoiceHelpers(t *testing.T) {
 	if mc.ID != "mc" {
 		t.Errorf("expected ID 'mc', got '%s'", mc.ID)
 	}
-	if mc.MultipleChoice == nil {
-		t.Fatal("expected MultipleChoice to be set")
+	if mc.Component != "MultipleChoice" {
+		t.Errorf("expected Component 'MultipleChoice', got '%s'", mc.Component)
 	}
-	if mc.MultipleChoice.Label != "Select Size" {
-		t.Errorf("expected label 'Select Size', got '%s'", mc.MultipleChoice.Label)
+	if mc.Label != "Select Size" {
+		t.Errorf("expected label 'Select Size', got '%s'", mc.Label)
 	}
-	if len(mc.MultipleChoice.Options) != 3 {
-		t.Errorf("expected 3 options, got %d", len(mc.MultipleChoice.Options))
+	if len(mc.Options) != 3 {
+		t.Errorf("expected 3 options, got %d", len(mc.Options))
 	}
-	if mc.MultipleChoice.Options[0].Label != "Small" {
-		t.Errorf("expected first option label 'Small', got '%s'", mc.MultipleChoice.Options[0].Label)
+	if mc.Options[0].Label != "Small" {
+		t.Errorf("expected first option label 'Small', got '%s'", mc.Options[0].Label)
 	}
-	if mc.MultipleChoice.Options[0].Value != "s" {
-		t.Errorf("expected first option value 's', got '%s'", mc.MultipleChoice.Options[0].Value)
+	if mc.Options[0].Value != "s" {
+		t.Errorf("expected first option value 's', got '%s'", mc.Options[0].Value)
 	}
 
 	// Test bound multiple choice
@@ -668,11 +693,11 @@ func TestMultipleChoiceHelpers(t *testing.T) {
 		Choice("Red", "red"),
 		Choice("Blue", "blue"),
 	})
-	if mcBound.MultipleChoice.DataBinding == nil {
+	if mcBound.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if mcBound.MultipleChoice.DataBinding.Path != "/prefs/color" {
-		t.Errorf("expected path '/prefs/color', got '%s'", mcBound.MultipleChoice.DataBinding.Path)
+	if mcBound.DataBinding.Path != "/prefs/color" {
+		t.Errorf("expected path '/prefs/color', got '%s'", mcBound.DataBinding.Path)
 	}
 }
 
@@ -682,39 +707,44 @@ func TestSliderHelpers(t *testing.T) {
 	if slider.ID != "slider" {
 		t.Errorf("expected ID 'slider', got '%s'", slider.ID)
 	}
-	if slider.Slider == nil {
-		t.Fatal("expected Slider to be set")
+	if slider.Component != "Slider" {
+		t.Errorf("expected Component 'Slider', got '%s'", slider.Component)
 	}
-	if slider.Slider.Label != "Volume" {
-		t.Errorf("expected label 'Volume', got '%s'", slider.Slider.Label)
+	if slider.Label != "Volume" {
+		t.Errorf("expected label 'Volume', got '%s'", slider.Label)
 	}
-	if slider.Slider.MinValue != 0 {
-		t.Errorf("expected minValue 0, got %f", slider.Slider.MinValue)
+	if slider.MinValue != 0 {
+		t.Errorf("expected minValue 0, got %f", slider.MinValue)
 	}
-	if slider.Slider.MaxValue != 100 {
-		t.Errorf("expected maxValue 100, got %f", slider.Slider.MaxValue)
+	if slider.MaxValue != 100 {
+		t.Errorf("expected maxValue 100, got %f", slider.MaxValue)
 	}
-	if slider.Slider.Value != 50 {
-		t.Errorf("expected value 50, got %f", slider.Slider.Value)
+	if slider.SliderValue != 50 {
+		t.Errorf("expected value 50, got %f", slider.SliderValue)
 	}
 
 	// Test bound slider
 	sliderBound := SliderBound("slider2", "Brightness", "/settings/brightness", 0, 255)
-	if sliderBound.Slider.DataBinding == nil {
+	if sliderBound.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if sliderBound.Slider.DataBinding.Path != "/settings/brightness" {
-		t.Errorf("expected path '/settings/brightness', got '%s'", sliderBound.Slider.DataBinding.Path)
+	if sliderBound.DataBinding.Path != "/settings/brightness" {
+		t.Errorf("expected path '/settings/brightness', got '%s'", sliderBound.DataBinding.Path)
 	}
 }
 
 func TestButtonPrimaryHelper(t *testing.T) {
-	btn := ButtonPrimary("btn", "Save", "save")
+	btns := ButtonPrimary("btn", "Save", "save")
 
-	if btn.Button == nil {
-		t.Fatal("expected Button to be set")
+	if len(btns) != 2 {
+		t.Fatalf("expected 2 components, got %d", len(btns))
 	}
-	if btn.Button.Primary != true {
+
+	btn := btns[0]
+	if btn.Component != "Button" {
+		t.Errorf("expected Component 'Button', got '%s'", btn.Component)
+	}
+	if btn.Primary != true {
 		t.Error("expected primary true")
 	}
 }
@@ -722,82 +752,82 @@ func TestButtonPrimaryHelper(t *testing.T) {
 func TestTextWithHintHelper(t *testing.T) {
 	txt := TextWithHint("title", "Welcome", UsageHintH1)
 
-	if txt.Text == nil {
-		t.Fatal("expected Text to be set")
+	if txt.Component != "Text" {
+		t.Errorf("expected Component 'Text', got '%s'", txt.Component)
 	}
-	if txt.Text.UsageHint != UsageHintH1 {
-		t.Errorf("expected usageHint 'h1', got '%s'", txt.Text.UsageHint)
+	if txt.UsageHint != UsageHintH1 {
+		t.Errorf("expected usageHint 'h1', got '%s'", txt.UsageHint)
 	}
 }
 
 func TestImageWithFitHelper(t *testing.T) {
 	img := ImageWithFit("img", "https://example.com/photo.jpg", "Photo", ImageFitCover)
 
-	if img.Image == nil {
-		t.Fatal("expected Image to be set")
+	if img.Component != "Image" {
+		t.Errorf("expected Component 'Image', got '%s'", img.Component)
 	}
-	if img.Image.Fit != ImageFitCover {
-		t.Errorf("expected fit 'cover', got '%s'", img.Image.Fit)
+	if img.Fit != ImageFitCover {
+		t.Errorf("expected fit 'cover', got '%s'", img.Fit)
 	}
 }
 
 func TestTextFieldWithTypeHelper(t *testing.T) {
 	tf := TextFieldWithType("password", "Password", "Enter password", TextFieldTypeObscured)
 
-	if tf.TextField == nil {
-		t.Fatal("expected TextField to be set")
+	if tf.Component != "TextField" {
+		t.Errorf("expected Component 'TextField', got '%s'", tf.Component)
 	}
-	if tf.TextField.TextFieldType != TextFieldTypeObscured {
-		t.Errorf("expected textFieldType 'obscured', got '%s'", tf.TextField.TextFieldType)
+	if tf.TextFieldType != TextFieldTypeObscured {
+		t.Errorf("expected textFieldType 'obscured', got '%s'", tf.TextFieldType)
 	}
 }
 
 func TestColumnWithLayoutHelper(t *testing.T) {
 	col := ColumnWithLayout("col", DistributionSpaceBetween, AlignmentCenter, "a", "b")
 
-	if col.Column == nil {
-		t.Fatal("expected Column to be set")
+	if col.Component != "Column" {
+		t.Errorf("expected Component 'Column', got '%s'", col.Component)
 	}
-	if col.Column.Distribution != DistributionSpaceBetween {
-		t.Errorf("expected distribution 'spaceBetween', got '%s'", col.Column.Distribution)
+	if col.Distribution != DistributionSpaceBetween {
+		t.Errorf("expected distribution 'spaceBetween', got '%s'", col.Distribution)
 	}
-	if col.Column.Alignment != AlignmentCenter {
-		t.Errorf("expected alignment 'center', got '%s'", col.Column.Alignment)
+	if col.Alignment != AlignmentCenter {
+		t.Errorf("expected alignment 'center', got '%s'", col.Alignment)
 	}
 }
 
 func TestRowWithLayoutHelper(t *testing.T) {
 	row := RowWithLayout("row", DistributionSpaceEvenly, AlignmentStretch, "x", "y")
 
-	if row.Row == nil {
-		t.Fatal("expected Row to be set")
+	if row.Component != "Row" {
+		t.Errorf("expected Component 'Row', got '%s'", row.Component)
 	}
-	if row.Row.Distribution != DistributionSpaceEvenly {
-		t.Errorf("expected distribution 'spaceEvenly', got '%s'", row.Row.Distribution)
+	if row.Distribution != DistributionSpaceEvenly {
+		t.Errorf("expected distribution 'spaceEvenly', got '%s'", row.Distribution)
 	}
-	if row.Row.Alignment != AlignmentStretch {
-		t.Errorf("expected alignment 'stretch', got '%s'", row.Row.Alignment)
+	if row.Alignment != AlignmentStretch {
+		t.Errorf("expected alignment 'stretch', got '%s'", row.Alignment)
 	}
 }
 
 func TestTextFieldBoundHelper(t *testing.T) {
 	tf := TextFieldBound("email", "Email", "Enter email", "/user/email")
 
-	if tf.TextField == nil {
-		t.Fatal("expected TextField to be set")
+	if tf.Component != "TextField" {
+		t.Errorf("expected Component 'TextField', got '%s'", tf.Component)
 	}
-	if tf.TextField.DataBinding == nil {
+	if tf.DataBinding == nil {
 		t.Fatal("expected DataBinding to be set")
 	}
-	if tf.TextField.DataBinding.Path != "/user/email" {
-		t.Errorf("expected path '/user/email', got '%s'", tf.TextField.DataBinding.Path)
+	if tf.DataBinding.Path != "/user/email" {
+		t.Errorf("expected path '/user/email', got '%s'", tf.DataBinding.Path)
 	}
 }
 
 func TestAllComponentsJSONSerialization(t *testing.T) {
 	s := NewSurface("all-components")
 
-	// Add all 18 component types
+	// Add all component types (buttons are added via AddAll since they return []Component)
 	s.AddAll(
 		Column("root", "row", "tabs", "modal", "list"),
 		Row("row", "card", "text", "image", "icon"),
@@ -811,12 +841,21 @@ func TestAllComponentsJSONSerialization(t *testing.T) {
 		Video("video", "https://example.com/video.mp4"),
 		AudioPlayer("audio", "https://example.com/audio.mp3", "Audio"),
 		Divider("divider"),
-		Button("button", "Click", "action"),
 		TextField("textfield", "Label", "Placeholder"),
 		CheckBox("checkbox", "Check", false),
 		DateTimeInput("datetime", "Date", true, true),
 		MultipleChoice("choice", "Select", []ChoiceOption{Choice("A", "a")}),
 		Slider("slider", "Slide", 0, 100, 50),
+	)
+	// Add button components
+	s.AddAll(Button("button", "Click", "action")...)
+
+	// Add placeholder components for references
+	s.AddAll(
+		TextStatic("content1", "Tab Content"),
+		TextStatic("trigger", "Trigger"),
+		TextStatic("dialog", "Dialog"),
+		TextStatic("template", "Template"),
 	)
 
 	msgs := s.Messages()
@@ -834,12 +873,13 @@ func TestAllComponentsJSONSerialization(t *testing.T) {
 		}
 	}
 
-	// Verify we have all 18 components
-	if msgs[1].SurfaceUpdate == nil {
-		t.Fatal("expected SurfaceUpdate")
+	// Verify we have the expected number of components
+	if msgs[1].UpdateComponents == nil {
+		t.Fatal("expected UpdateComponents")
 	}
-	if len(msgs[1].SurfaceUpdate.Components) != 18 {
-		t.Errorf("expected 18 components, got %d", len(msgs[1].SurfaceUpdate.Components))
+	// 17 base components + 2 button components + 4 placeholder components = 23
+	if len(msgs[1].UpdateComponents.Components) != 23 {
+		t.Errorf("expected 23 components, got %d", len(msgs[1].UpdateComponents.Components))
 	}
 }
 
@@ -913,7 +953,7 @@ func TestEnumValues(t *testing.T) {
 func TestValidateEmptyID(t *testing.T) {
 	s := NewSurface("test")
 	s.Add(TextStatic("root", "Hello"))
-	s.Add(Component{ID: "", Text: &TextDef{Text: "Empty ID"}})
+	s.Add(Component{ID: "", Component: "Text", Text: "Empty ID"})
 
 	errors := s.Validate()
 
@@ -1056,6 +1096,27 @@ func TestValidateChildNotFound(t *testing.T) {
 		}
 	})
 
+	// Test Button with missing child
+	t.Run("Button", func(t *testing.T) {
+		s := NewSurface("test")
+		s.Add(TextStatic("root", "Root"))
+		s.Add(ButtonOnly("btn", "missing-child", "click"))
+
+		errors := s.Validate()
+
+		found := false
+		for _, err := range errors {
+			if err.ComponentID == "btn" && err.Field == "Button.Child" {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			t.Error("expected error about missing Button child")
+		}
+	})
+
 	// Test List with missing template
 	t.Run("List", func(t *testing.T) {
 		s := NewSurface("test")
@@ -1162,7 +1223,7 @@ func TestValidateValid(t *testing.T) {
 		s.Add(TextStatic("tab1-content", "Tab 1 Content"))
 		s.Add(TextStatic("tab2-content", "Tab 2 Content"))
 		s.Add(Modal("modal", "modal-trigger", "modal-dialog"))
-		s.Add(Button("modal-trigger", "Open", "open"))
+		s.AddAll(Button("modal-trigger", "Open", "open")...)
 		s.Add(TextStatic("modal-dialog", "Modal Content"))
 		s.Add(ListTemplate("list", "list-item", "/items"))
 		s.Add(TextBound("list-item", "/name"))
@@ -1226,7 +1287,7 @@ func TestValidateMultipleErrors(t *testing.T) {
 	s.SetRoot("missing-root")
 	s.Add(TextStatic("duplicate", "First"))
 	s.Add(TextStatic("duplicate", "Second"))
-	s.Add(Component{ID: "", Text: &TextDef{Text: "Empty"}})
+	s.Add(Component{ID: "", Component: "Text", Text: "Empty"})
 	s.Add(Column("col", "missing-child"))
 
 	errors := s.Validate()
@@ -1267,5 +1328,78 @@ func TestValidateMultipleErrors(t *testing.T) {
 	}
 	if !hasMissingChildError {
 		t.Error("expected missing child error")
+	}
+}
+
+func TestFlatComponentStructure(t *testing.T) {
+	// Test that the flat structure serializes correctly
+	txt := TextStatic("my-text", "Hello World")
+
+	data, err := json.Marshal(txt)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	// Should have "component": "Text" instead of nested "Text": {...}
+	jsonStr := string(data)
+	if !strings.Contains(jsonStr, `"component":"Text"`) {
+		t.Errorf("expected flat structure with component field, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"text":"Hello World"`) {
+		t.Errorf("expected text field at top level, got: %s", jsonStr)
+	}
+}
+
+func TestUpdateComponentsMessageType(t *testing.T) {
+	s := NewSurface("test")
+	s.Add(TextStatic("root", "Hello"))
+
+	msgs := s.Messages()
+
+	data, err := json.Marshal(msgs[1])
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	if !strings.Contains(jsonStr, `"updateComponents"`) {
+		t.Errorf("expected 'updateComponents' message type, got: %s", jsonStr)
+	}
+	if strings.Contains(jsonStr, `"surfaceUpdate"`) {
+		t.Errorf("should not contain old 'surfaceUpdate' message type, got: %s", jsonStr)
+	}
+}
+
+func TestButtonChildReference(t *testing.T) {
+	btns := Button("my-btn", "Click Me", "submit")
+
+	// Verify button has child reference
+	btn := btns[0]
+	if btn.Child != "my-btn_text" {
+		t.Errorf("expected child 'my-btn_text', got '%s'", btn.Child)
+	}
+
+	// Verify child text component
+	txt := btns[1]
+	if txt.ID != "my-btn_text" {
+		t.Errorf("expected ID 'my-btn_text', got '%s'", txt.ID)
+	}
+	if txt.Text != "Click Me" {
+		t.Errorf("expected text 'Click Me', got '%s'", txt.Text)
+	}
+
+	// Verify JSON serialization
+	data, err := json.Marshal(btn)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+	if !strings.Contains(jsonStr, `"child":"my-btn_text"`) {
+		t.Errorf("expected child field in button, got: %s", jsonStr)
+	}
+	// Should not have "text" field directly on button
+	if strings.Contains(jsonStr, `"text":"Click Me"`) {
+		t.Errorf("button should not have text field directly, got: %s", jsonStr)
 	}
 }

@@ -48,7 +48,7 @@ func (s *Surface) SetData(path string, value any) *Surface {
 func (s *Surface) Messages() []Message {
 	messages := []Message{
 		{BeginRendering: &BeginRendering{SurfaceID: s.id, Root: s.root}},
-		{SurfaceUpdate: &SurfaceUpdate{SurfaceID: s.id, Components: s.components}},
+		{UpdateComponents: &UpdateComponents{SurfaceID: s.id, Components: s.components}},
 	}
 
 	if len(s.data) > 0 {
@@ -60,10 +60,10 @@ func (s *Surface) Messages() []Message {
 	return messages
 }
 
-// SurfaceUpdateMessage returns a SurfaceUpdate message with current components.
-func (s *Surface) SurfaceUpdateMessage() Message {
+// UpdateComponentsMessage returns an UpdateComponents message with current components.
+func (s *Surface) UpdateComponentsMessage() Message {
 	return Message{
-		SurfaceUpdate: &SurfaceUpdate{SurfaceID: s.id, Components: s.components},
+		UpdateComponents: &UpdateComponents{SurfaceID: s.id, Components: s.components},
 	}
 }
 
@@ -136,64 +136,54 @@ func (s *Surface) Validate() []ValidationError {
 		})
 	}
 
-	// Second pass: check children references
+	// Second pass: check children references based on component type
 	for _, c := range s.components {
 		// Skip components with empty IDs (already reported)
 		if c.ID == "" {
 			continue
 		}
 
-		// Check Column children
-		if c.Column != nil {
-			for _, child := range c.Column.Children {
+		switch c.Component {
+		case "Column", "Row":
+			for _, child := range c.Children {
 				if !componentIDs[child] {
 					errors = append(errors, ValidationError{
 						ComponentID: c.ID,
-						Field:       "Column.Children",
+						Field:       c.Component + ".Children",
 						Message:     fmt.Sprintf("child '%s' not found", child),
 					})
 				}
 			}
-		}
 
-		// Check Row children
-		if c.Row != nil {
-			for _, child := range c.Row.Children {
-				if !componentIDs[child] {
-					errors = append(errors, ValidationError{
-						ComponentID: c.ID,
-						Field:       "Row.Children",
-						Message:     fmt.Sprintf("child '%s' not found", child),
-					})
-				}
-			}
-		}
-
-		// Check Card child
-		if c.Card != nil {
-			if !componentIDs[c.Card.Child] {
+		case "Card":
+			if c.Child != "" && !componentIDs[c.Child] {
 				errors = append(errors, ValidationError{
 					ComponentID: c.ID,
 					Field:       "Card.Child",
-					Message:     fmt.Sprintf("child '%s' not found", c.Card.Child),
+					Message:     fmt.Sprintf("child '%s' not found", c.Child),
 				})
 			}
-		}
 
-		// Check List template
-		if c.List != nil {
-			if !componentIDs[c.List.Template] {
+		case "Button":
+			if c.Child != "" && !componentIDs[c.Child] {
+				errors = append(errors, ValidationError{
+					ComponentID: c.ID,
+					Field:       "Button.Child",
+					Message:     fmt.Sprintf("child '%s' not found", c.Child),
+				})
+			}
+
+		case "List":
+			if c.Template != "" && !componentIDs[c.Template] {
 				errors = append(errors, ValidationError{
 					ComponentID: c.ID,
 					Field:       "List.Template",
-					Message:     fmt.Sprintf("template '%s' not found", c.List.Template),
+					Message:     fmt.Sprintf("template '%s' not found", c.Template),
 				})
 			}
-		}
 
-		// Check Tabs children
-		if c.Tabs != nil {
-			for i, tab := range c.Tabs.Tabs {
+		case "Tabs":
+			for i, tab := range c.Tabs {
 				if !componentIDs[tab.Child] {
 					errors = append(errors, ValidationError{
 						ComponentID: c.ID,
@@ -202,22 +192,20 @@ func (s *Surface) Validate() []ValidationError {
 					})
 				}
 			}
-		}
 
-		// Check Modal children
-		if c.Modal != nil {
-			if !componentIDs[c.Modal.EntryPointChild] {
+		case "Modal":
+			if c.EntryPointChild != "" && !componentIDs[c.EntryPointChild] {
 				errors = append(errors, ValidationError{
 					ComponentID: c.ID,
 					Field:       "Modal.EntryPointChild",
-					Message:     fmt.Sprintf("entryPointChild '%s' not found", c.Modal.EntryPointChild),
+					Message:     fmt.Sprintf("entryPointChild '%s' not found", c.EntryPointChild),
 				})
 			}
-			if !componentIDs[c.Modal.ContentChild] {
+			if c.ContentChild != "" && !componentIDs[c.ContentChild] {
 				errors = append(errors, ValidationError{
 					ComponentID: c.ID,
 					Field:       "Modal.ContentChild",
-					Message:     fmt.Sprintf("contentChild '%s' not found", c.Modal.ContentChild),
+					Message:     fmt.Sprintf("contentChild '%s' not found", c.ContentChild),
 				})
 			}
 		}

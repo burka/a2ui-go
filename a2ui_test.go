@@ -1403,3 +1403,112 @@ func TestButtonChildReference(t *testing.T) {
 		t.Errorf("button should not have text field directly, got: %s", jsonStr)
 	}
 }
+
+// Custom component type for testing
+type Gauge struct {
+	Component
+	Color      string `json:"color"`
+	ShowLabel  bool   `json:"showLabel"`
+	Thresholds []int  `json:"thresholds,omitempty"`
+}
+
+// Another custom component type
+type SparklineChart struct {
+	Component
+	Data   []float64 `json:"data"`
+	Color  string    `json:"color"`
+	Height int       `json:"height"`
+}
+
+func TestCustomComponentWithEmbedding(t *testing.T) {
+	// Create a custom component with embedded Component
+	gauge := Gauge{
+		Component: Component{
+			ID:        "temp-gauge",
+			Component: "Gauge",
+			Label:     "Temperature",
+			MinValue:  0,
+			MaxValue:  100,
+		},
+		Color:      "#ff5500",
+		ShowLabel:  true,
+		Thresholds: []int{30, 60, 90},
+	}
+
+	data, err := json.Marshal(gauge)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	jsonStr := string(data)
+
+	// Verify standard fields from embedded Component
+	if !strings.Contains(jsonStr, `"component":"Gauge"`) {
+		t.Errorf("expected component field, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"label":"Temperature"`) {
+		t.Errorf("expected label field, got: %s", jsonStr)
+	}
+
+	// Verify custom fields are at top level
+	if !strings.Contains(jsonStr, `"color":"#ff5500"`) {
+		t.Errorf("expected color field, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"showLabel":true`) {
+		t.Errorf("expected showLabel field, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"thresholds":[30,60,90]`) {
+		t.Errorf("expected thresholds field, got: %s", jsonStr)
+	}
+}
+
+func TestCustomComponentInSurface(t *testing.T) {
+	surface := NewSurface("custom-demo")
+
+	// Add standard components
+	surface.Add(Column("root", "gauge", "chart"))
+
+	// Add custom Gauge component with embedding
+	surface.Add(Gauge{
+		Component: Component{
+			ID:        "gauge",
+			Component: "Gauge",
+			Label:     "CPU Usage",
+		},
+		Color:     "#00ff00",
+		ShowLabel: true,
+	})
+
+	// Add another custom component
+	surface.Add(SparklineChart{
+		Component: Component{
+			ID:        "chart",
+			Component: "SparklineChart",
+		},
+		Data:   []float64{10, 25, 30, 45, 60},
+		Color:  "#0066ff",
+		Height: 50,
+	})
+
+	var buf bytes.Buffer
+	err := WriteJSONL(&buf, surface.Messages())
+	if err != nil {
+		t.Fatalf("WriteJSONL failed: %v", err)
+	}
+
+	output := buf.String()
+
+	// Verify custom components are serialized correctly
+	if !strings.Contains(output, `"component":"Gauge"`) {
+		t.Errorf("expected Gauge component, got: %s", output)
+	}
+	if !strings.Contains(output, `"component":"SparklineChart"`) {
+		t.Errorf("expected SparklineChart component, got: %s", output)
+	}
+	if !strings.Contains(output, `"color":"#00ff00"`) {
+		t.Errorf("expected color field for Gauge, got: %s", output)
+	}
+	if !strings.Contains(output, `"height":50`) {
+		t.Errorf("expected height field for SparklineChart, got: %s", output)
+	}
+}

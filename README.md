@@ -18,7 +18,7 @@ A2UI lets AI agents generate native UIs safely by sending declarative JSON inste
 go get github.com/burka/a2ui-go
 ```
 
-**Zero dependencies** - pure stdlib only.
+**Zero dependencies** - pure stdlib only. Requires Go 1.18+.
 
 ## Quick Start
 
@@ -314,6 +314,117 @@ Clients can extend with custom components.
 **Idiomatic** - Simple Go patterns, no magic
 **Practical** - Built for HTTP streaming and LLM generation
 **Flexible** - Use helpers or build `Component` structs directly
+
+## Custom Components
+
+A2UI supports custom components through **struct embedding**. Define your own component types with custom fields, and they serialize correctly to JSON.
+
+### Defining Custom Components
+
+Use Go's struct embedding to extend the base `Component`:
+
+```go
+// Define a custom Gauge component
+type Gauge struct {
+    a2ui.Component                    // Embed base component
+    Color      string   `json:"color"`
+    ShowLabel  bool     `json:"showLabel"`
+    Thresholds []int    `json:"thresholds,omitempty"`
+}
+
+// Define a custom chart component
+type SparklineChart struct {
+    a2ui.Component
+    Data   []float64 `json:"data"`
+    Color  string    `json:"color"`
+    Height int       `json:"height"`
+}
+```
+
+### Using Custom Components
+
+Add custom components to a surface just like standard components:
+
+```go
+surface := a2ui.NewSurface("dashboard")
+surface.Add(a2ui.Column("root", "gauge", "chart"))
+
+// Add custom Gauge
+surface.Add(Gauge{
+    Component: a2ui.Component{
+        ID:        "gauge",
+        Component: "Gauge",
+        Label:     "Temperature",
+    },
+    Color:      "#ff5500",
+    ShowLabel:  true,
+    Thresholds: []int{30, 60, 90},
+})
+
+// Add custom SparklineChart
+surface.Add(SparklineChart{
+    Component: a2ui.Component{
+        ID:        "chart",
+        Component: "SparklineChart",
+    },
+    Data:   []float64{10, 25, 30, 45, 60},
+    Color:  "#0066ff",
+    Height: 50,
+})
+```
+
+This serializes to flat JSON with all fields at the top level:
+
+```json
+{
+  "id": "gauge",
+  "component": "Gauge",
+  "label": "Temperature",
+  "color": "#ff5500",
+  "showLabel": true,
+  "thresholds": [30, 60, 90]
+}
+```
+
+### Helper Functions for Custom Components
+
+Create factory functions for cleaner usage:
+
+```go
+func NewGauge(id, label string, color string, thresholds []int) Gauge {
+    return Gauge{
+        Component: a2ui.Component{
+            ID:        id,
+            Component: "Gauge",
+            Label:     label,
+        },
+        Color:      color,
+        ShowLabel:  true,
+        Thresholds: thresholds,
+    }
+}
+
+// Usage
+surface.Add(NewGauge("temp", "Temperature", "#ff5500", []int{30, 60, 90}))
+```
+
+### Client-Side Rendering
+
+Custom components require client-side implementation. The client receives the component type via the `component` field:
+
+```typescript
+// React example
+function renderComponent(comp: Component) {
+  switch (comp.component) {
+    case "Gauge":
+      return <GaugeWidget color={comp.color} thresholds={comp.thresholds} {...comp} />;
+    case "SparklineChart":
+      return <SparklineWidget data={comp.data} color={comp.color} height={comp.height} />;
+    default:
+      return renderStandardComponent(comp);
+  }
+}
+```
 
 ## Client Rendering
 

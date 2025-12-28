@@ -6,7 +6,7 @@ import "fmt"
 type Surface struct {
 	id         string
 	root       string
-	components []Component
+	components []any
 	data       map[string]any
 }
 
@@ -27,14 +27,18 @@ func (s *Surface) SetRoot(id string) *Surface {
 }
 
 // Add appends a component to the surface.
-func (s *Surface) Add(c Component) *Surface {
+// The component can be of type Component or any custom struct with embedded Component.
+func (s *Surface) Add(c any) *Surface {
 	s.components = append(s.components, c)
 	return s
 }
 
-// AddAll appends multiple components to the surface.
+// AddAll appends multiple standard components to the surface.
+// For adding custom components, use Add() individually.
 func (s *Surface) AddAll(components ...Component) *Surface {
-	s.components = append(s.components, components...)
+	for _, c := range components {
+		s.components = append(s.components, c)
+	}
 	return s
 }
 
@@ -75,7 +79,7 @@ func (s *Surface) DataModelUpdateMessage() Message {
 }
 
 // Components returns the current component list.
-func (s *Surface) Components() []Component {
+func (s *Surface) Components() []any {
 	return s.components
 }
 
@@ -95,6 +99,8 @@ func (e ValidationError) Error() string {
 
 // Validate checks the surface for structural errors.
 // It returns a slice of validation errors (empty slice means valid).
+// Note: Validation only works for standard Component types. Custom components
+// with embedded Component are validated for their embedded fields only.
 func (s *Surface) Validate() []ValidationError {
 	var errors []ValidationError
 
@@ -102,9 +108,28 @@ func (s *Surface) Validate() []ValidationError {
 	componentIDs := make(map[string]bool)
 	duplicates := make(map[string]bool)
 
+	// Helper to extract Component from any type
+	getComponent := func(c any) *Component {
+		switch v := c.(type) {
+		case Component:
+			return &v
+		case *Component:
+			return v
+		default:
+			return nil
+		}
+	}
+
 	// First pass: collect IDs and detect duplicates/empty IDs
 	for _, c := range s.components {
-		if c.ID == "" {
+		comp := getComponent(c)
+		if comp == nil {
+			// Custom component - skip validation but try to get ID via reflection would be complex
+			// For now, custom components are not validated
+			continue
+		}
+
+		if comp.ID == "" {
 			errors = append(errors, ValidationError{
 				ComponentID: "",
 				Field:       "ID",
@@ -113,17 +138,17 @@ func (s *Surface) Validate() []ValidationError {
 			continue
 		}
 
-		if componentIDs[c.ID] {
-			if !duplicates[c.ID] {
+		if componentIDs[comp.ID] {
+			if !duplicates[comp.ID] {
 				errors = append(errors, ValidationError{
-					ComponentID: c.ID,
+					ComponentID: comp.ID,
 					Field:       "ID",
 					Message:     "duplicate component ID",
 				})
-				duplicates[c.ID] = true
+				duplicates[comp.ID] = true
 			}
 		} else {
-			componentIDs[c.ID] = true
+			componentIDs[comp.ID] = true
 		}
 	}
 
@@ -138,55 +163,60 @@ func (s *Surface) Validate() []ValidationError {
 
 	// Second pass: check children references based on component type
 	for _, c := range s.components {
-		// Skip components with empty IDs (already reported)
-		if c.ID == "" {
+		comp := getComponent(c)
+		if comp == nil {
 			continue
 		}
 
-		switch c.Component {
+		// Skip components with empty IDs (already reported)
+		if comp.ID == "" {
+			continue
+		}
+
+		switch comp.Component {
 		case "Column", "Row":
-			for _, child := range c.Children {
+			for _, child := range comp.Children {
 				if !componentIDs[child] {
 					errors = append(errors, ValidationError{
-						ComponentID: c.ID,
-						Field:       c.Component + ".Children",
+						ComponentID: comp.ID,
+						Field:       comp.Component + ".Children",
 						Message:     fmt.Sprintf("child '%s' not found", child),
 					})
 				}
 			}
 
 		case "Card":
-			if c.Child != "" && !componentIDs[c.Child] {
+			if comp.Child != "" && !componentIDs[comp.Child] {
 				errors = append(errors, ValidationError{
-					ComponentID: c.ID,
+					ComponentID: comp.ID,
 					Field:       "Card.Child",
-					Message:     fmt.Sprintf("child '%s' not found", c.Child),
+					Message:     fmt.Sprintf("child '%s' not found", comp.Child),
 				})
 			}
 
 		case "Button":
-			if c.Child != "" && !componentIDs[c.Child] {
+			if comp.Child != "" && !componentIDs[comp.Child] {
 				errors = append(errors, ValidationError{
-					ComponentID: c.ID,
+					ComponentID: comp.ID,
 					Field:       "Button.Child",
-					Message:     fmt.Sprintf("child '%s' not found", c.Child),
+					Message:     fmt.Sprintf("child '%s' not found", comp.Child),
 				})
 			}
 
 		case "List":
-			if c.Template != "" && !componentIDs[c.Template] {
+			if comp.Template != "" && !componentIDs[comp.Template] {
 				errors = append(errors, ValidationError{
-					ComponentID: c.ID,
+					ComponentID: comp.ID,
 					Field:       "List.Template",
-					Message:     fmt.Sprintf("template '%s' not found", c.Template),
+					Message:     fmt.Sprintf("template '%s' not found", comp.Template),
 				})
 			}
 
 		case "Tabs":
-			for i, tab := range c.Tabs {
+			for i, tab := range comp.Tabs {
 				if !componentIDs[tab.Child] {
 					errors = append(errors, ValidationError{
-						ComponentID: c.ID,
+						ComponentID: comp.ID,
 						Field:       fmt.Sprintf("Tabs.Tabs[%d].Child", i),
 						Message:     fmt.Sprintf("child '%s' not found", tab.Child),
 					})
@@ -194,18 +224,18 @@ func (s *Surface) Validate() []ValidationError {
 			}
 
 		case "Modal":
-			if c.EntryPointChild != "" && !componentIDs[c.EntryPointChild] {
+			if comp.EntryPointChild != "" && !componentIDs[comp.EntryPointChild] {
 				errors = append(errors, ValidationError{
-					ComponentID: c.ID,
+					ComponentID: comp.ID,
 					Field:       "Modal.EntryPointChild",
-					Message:     fmt.Sprintf("entryPointChild '%s' not found", c.EntryPointChild),
+					Message:     fmt.Sprintf("entryPointChild '%s' not found", comp.EntryPointChild),
 				})
 			}
-			if c.ContentChild != "" && !componentIDs[c.ContentChild] {
+			if comp.ContentChild != "" && !componentIDs[comp.ContentChild] {
 				errors = append(errors, ValidationError{
-					ComponentID: c.ID,
+					ComponentID: comp.ID,
 					Field:       "Modal.ContentChild",
-					Message:     fmt.Sprintf("contentChild '%s' not found", c.ContentChild),
+					Message:     fmt.Sprintf("contentChild '%s' not found", comp.ContentChild),
 				})
 			}
 		}

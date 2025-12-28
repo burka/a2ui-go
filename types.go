@@ -19,9 +19,10 @@ type BeginRendering struct {
 }
 
 // UpdateComponents sends component definitions to the client.
+// Components can be of type Component or any custom struct with embedded Component.
 type UpdateComponents struct {
-	SurfaceID  string      `json:"surfaceId"`
-	Components []Component `json:"components"`
+	SurfaceID  string `json:"surfaceId"`
+	Components []any  `json:"components"`
 }
 
 // DataModelUpdate sends data model contents to the client.
